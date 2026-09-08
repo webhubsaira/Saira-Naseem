@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Close mobile hamburger menu if open
           if (navbarCollapse && navbarCollapse.classList.contains('show')) {
-            // Using Bootstrap Collapse API if available, or class removal fallback
             if (window.bootstrap && window.bootstrap.Collapse) {
               const bsCollapse = window.bootstrap.Collapse.getInstance(navbarCollapse) || new window.bootstrap.Collapse(navbarCollapse);
               bsCollapse.hide();
@@ -145,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('revealed');
-            observer.unobserve(entry.target); // Trigger animation once
+            observer.unobserve(entry.target);
           }
         });
       },
@@ -157,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     revealElements.forEach((el) => revealObserver.observe(el));
   } else {
-    // Fallback for older browsers
     revealElements.forEach((el) => el.classList.add('revealed'));
   }
 
@@ -185,7 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     progressBars.forEach((bar) => skillObserver.observe(bar));
   } else {
-    // Fallback if IntersectionObserver is not supported
     progressBars.forEach((bar) => {
       const targetWidth = bar.getAttribute('data-progress');
       if (targetWidth) bar.style.width = `${targetWidth}%`;
@@ -197,19 +194,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // --------------------------------------------------------------------------
   filterBtns.forEach((btn) => {
     btn.addEventListener('click', function () {
-      // 1. Update active button state
       filterBtns.forEach((b) => b.classList.remove('active'));
       this.classList.add('active');
 
       const selectedFilter = this.getAttribute('data-filter');
 
-      // 2. Filter projects with smooth fade transition
       projectItems.forEach((item) => {
         const itemCategory = item.getAttribute('data-category');
 
         if (selectedFilter === 'all' || itemCategory === selectedFilter) {
           item.classList.remove('hidden-project');
-          // Trigger slight reflow for animation
           setTimeout(() => {
             item.style.opacity = '1';
             item.style.transform = 'translateY(0)';
@@ -226,22 +220,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // 9. Contact Form Validation & Submission
+  // 9. Contact Form Validation & Submission (Formspree AJAX)
   // --------------------------------------------------------------------------
-  /**
-   * NOTE FOR USER:
-   * To connect this static contact form to a live service like Formspree or EmailJS:
-   * 1. FORMSPREE:
-   *    Change the <form> attributes in index.html to:
-   *    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
-   * 2. EMAILJS:
-   *    Include EmailJS SDK and call emailjs.sendForm('SERVICE_ID', 'TEMPLATE_ID', this)
-   */
   if (contactForm) {
-    contactForm.addEventListener('submit', function (event) {
+    contactForm.addEventListener('submit', async function (event) {
       event.preventDefault();
       event.stopPropagation();
 
+      // Validate inputs
       if (!contactForm.checkValidity()) {
         contactForm.classList.add('was-validated');
         return;
@@ -249,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       contactForm.classList.add('was-validated');
 
-      // Simulate sending state
       const submitBtn = contactForm.querySelector('button[type="submit"]');
       const originalBtnText = submitBtn.innerHTML;
       submitBtn.disabled = true;
@@ -258,29 +243,60 @@ document.addEventListener('DOMContentLoaded', () => {
         Sending Message...
       `;
 
-      // Simulating a fast asynchronous response (500ms)
-      setTimeout(() => {
-        // Reset submit button
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalBtnText;
+      // If a Formspree action endpoint is provided, submit via fetch
+      const formAction = contactForm.getAttribute('action');
+      if (formAction && formAction.includes('formspree.io')) {
+        try {
+          const response = await fetch(formAction, {
+            method: 'POST',
+            body: new FormData(contactForm),
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
 
-        // Show friendly success alert
-        if (formSuccessAlert) {
-          formSuccessAlert.classList.remove('d-none');
-          formSuccessAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        // Reset form fields
-        contactForm.reset();
-        contactForm.classList.remove('was-validated');
-
-        // Automatically hide success alert after 6 seconds
-        setTimeout(() => {
-          if (formSuccessAlert) {
-            formSuccessAlert.classList.add('d-none');
+          if (response.ok) {
+            if (formSuccessAlert) {
+              formSuccessAlert.classList.remove('d-none');
+              formSuccessAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            contactForm.reset();
+            contactForm.classList.remove('was-validated');
+            setTimeout(() => {
+              if (formSuccessAlert) {
+                formSuccessAlert.classList.add('d-none');
+              }
+            }, 6000);
+          } else {
+            alert('Oops! There was a problem submitting your message. Please try again.');
           }
-        }, 6000);
-      }, 600);
+        } catch (error) {
+          alert('Network error. Please check your internet connection and try again.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
+      } else {
+        // Local simulation fallback
+        setTimeout(() => {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+
+          if (formSuccessAlert) {
+            formSuccessAlert.classList.remove('d-none');
+            formSuccessAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+
+          contactForm.reset();
+          contactForm.classList.remove('was-validated');
+
+          setTimeout(() => {
+            if (formSuccessAlert) {
+              formSuccessAlert.classList.add('d-none');
+            }
+          }, 6000);
+        }, 600);
+      }
     });
   }
 
@@ -289,8 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --------------------------------------------------------------------------
   const cvButtons = document.querySelectorAll('.btn-download-cv');
   cvButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      // Creates a temporary dummy blob or alert notifying user of CV download in demo
+    btn.addEventListener('click', () => {
       const notification = document.createElement('div');
       notification.className = 'toast-notification';
       notification.style.position = 'fixed';
