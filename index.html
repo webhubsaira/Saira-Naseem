@@ -1015,12 +1015,12 @@
                 </div>
               </div>
 
-              <!-- Form Element with Bootstrap Validation
-                   NOTE: To connect this form to Formspree, update:
-                   action="https://formspree.io/f/YOUR_FORMSPREE_ID" method="POST"
-              -->
+
+              <!-- Form Element with Web3Forms Integration -->
               <form id="portfolioContactForm" action="https://api.web3forms.com/submit" method="POST" class="needs-validation" novalidate>
-                <input type="hidden" name="access_key" value="7d5a9563-0e85-4fe5-a5db-fded3049bbc6">
+                <!-- Web3Forms Access Key: Paste your Web3Forms Access Key in the value attribute below -->
+                <input type="hidden" name="access_key" id="web3formsAccessKey" value="7d5a9563-0e85-4fe5-a5db-fded3049bbc6" />
+                <input type="hidden" name="from_name" value="Portfolio Contact Form" />
                 <div class="row g-3">
                   <!-- Full Name -->
                   <div class="col-md-6">

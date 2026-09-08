@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Close mobile hamburger menu if open
           if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+            // Using Bootstrap Collapse API if available, or class removal fallback
             if (window.bootstrap && window.bootstrap.Collapse) {
               const bsCollapse = window.bootstrap.Collapse.getInstance(navbarCollapse) || new window.bootstrap.Collapse(navbarCollapse);
               bsCollapse.hide();
@@ -144,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('revealed');
-            observer.unobserve(entry.target);
+            observer.unobserve(entry.target); // Trigger animation once
           }
         });
       },
@@ -156,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     revealElements.forEach((el) => revealObserver.observe(el));
   } else {
+    // Fallback for older browsers
     revealElements.forEach((el) => el.classList.add('revealed'));
   }
 
@@ -183,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     progressBars.forEach((bar) => skillObserver.observe(bar));
   } else {
+    // Fallback if IntersectionObserver is not supported
     progressBars.forEach((bar) => {
       const targetWidth = bar.getAttribute('data-progress');
       if (targetWidth) bar.style.width = `${targetWidth}%`;
@@ -194,16 +197,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // --------------------------------------------------------------------------
   filterBtns.forEach((btn) => {
     btn.addEventListener('click', function () {
+      // 1. Update active button state
       filterBtns.forEach((b) => b.classList.remove('active'));
       this.classList.add('active');
 
       const selectedFilter = this.getAttribute('data-filter');
 
+      // 2. Filter projects with smooth fade transition
       projectItems.forEach((item) => {
         const itemCategory = item.getAttribute('data-category');
 
         if (selectedFilter === 'all' || itemCategory === selectedFilter) {
           item.classList.remove('hidden-project');
+          // Trigger slight reflow for animation
           setTimeout(() => {
             item.style.opacity = '1';
             item.style.transform = 'translateY(0)';
@@ -220,14 +226,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // 9. Contact Form Validation & Submission (Formspree AJAX)
+  // 9. Contact Form Validation & Submission (Web3Forms API)
   // --------------------------------------------------------------------------
   if (contactForm) {
     contactForm.addEventListener('submit', async function (event) {
       event.preventDefault();
       event.stopPropagation();
 
-      // Validate inputs
+      // Validate required inputs
       if (!contactForm.checkValidity()) {
         contactForm.classList.add('was-validated');
         return;
@@ -236,66 +242,69 @@ document.addEventListener('DOMContentLoaded', () => {
       contactForm.classList.add('was-validated');
 
       const submitBtn = contactForm.querySelector('button[type="submit"]');
-      const originalBtnText = submitBtn.innerHTML;
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        Sending Message...
-      `;
+      const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Send Message';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Sending Message...
+        `;
+      }
 
-      // If a Formspree action endpoint is provided, submit via fetch
-      const formAction = contactForm.getAttribute('action');
-      if (formAction && formAction.includes('formspree.io')) {
-        try {
-          const response = await fetch(formAction, {
-            method: 'POST',
-            body: new FormData(contactForm),
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
+      const formAction = contactForm.getAttribute('action') || 'https://api.web3forms.com/submit';
+      const formData = new FormData(contactForm);
+      const accessKey = formData.get('access_key');
 
-          if (response.ok) {
-            if (formSuccessAlert) {
-              formSuccessAlert.classList.remove('d-none');
-              formSuccessAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            contactForm.reset();
-            contactForm.classList.remove('was-validated');
-            setTimeout(() => {
-              if (formSuccessAlert) {
-                formSuccessAlert.classList.add('d-none');
-              }
-            }, 6000);
-          } else {
-            alert('Oops! There was a problem submitting your message. Please try again.');
-          }
-        } catch (error) {
-          alert('Network error. Please check your internet connection and try again.');
-        } finally {
+      // Check if user has pasted their real Web3Forms Access Key
+      if (!accessKey || accessKey === 'YOUR_ACCESS_KEY_HERE') {
+        alert('Please paste your Web3Forms Access Key into index.html (in <input name="access_key" value="...">) to receive real emails.');
+        if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = originalBtnText;
         }
-      } else {
-        // Local simulation fallback
-        setTimeout(() => {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalBtnText;
+        return;
+      }
 
+      try {
+        const response = await fetch(formAction, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // Success: Show confirmation banner
           if (formSuccessAlert) {
             formSuccessAlert.classList.remove('d-none');
             formSuccessAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
 
+          // Reset form fields
           contactForm.reset();
           contactForm.classList.remove('was-validated');
 
+          // Auto-hide success alert after 7 seconds
           setTimeout(() => {
             if (formSuccessAlert) {
               formSuccessAlert.classList.add('d-none');
             }
-          }, 6000);
-        }, 600);
+          }, 7000);
+        } else {
+          // Show error returned by Web3Forms
+          const errorMsg = result && result.message ? result.message : 'Failed to send message. Please check your Access Key.';
+          alert(`Web3Forms Error: ${errorMsg}`);
+        }
+      } catch (error) {
+        alert('Network connection error. Please check your internet and try again.');
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnText;
+        }
       }
     });
   }
@@ -305,7 +314,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --------------------------------------------------------------------------
   const cvButtons = document.querySelectorAll('.btn-download-cv');
   cvButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      // Creates a temporary dummy blob or alert notifying user of CV download in demo
       const notification = document.createElement('div');
       notification.className = 'toast-notification';
       notification.style.position = 'fixed';
