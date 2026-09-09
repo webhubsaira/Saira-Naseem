@@ -1057,7 +1057,7 @@ img {
 /* --------------------------------------------------------------------------
    12. Testimonials Section
    -------------------------------------------------------------------------- */
-.testimonials-section {
+/*.testimonials-section {
   padding: 100px 0;
   background-color: var(--color-canvas);
 }
@@ -1121,7 +1121,7 @@ img {
   font-size: 0.85rem;
   color: var(--color-text-muted);
   margin-bottom: 0;
-}
+}*/
 
 /* --------------------------------------------------------------------------
    13. Contact Section (Dark Luxury Aesthetic)
