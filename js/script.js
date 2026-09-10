@@ -1,19 +1,13 @@
 /**
- * ==========================================================================
- * Alex Morgan | Personal Portfolio Website
+ * Saira Naseem | Full Stack Web Developer Portfolio
  * Script: js/script.js
- * Tech: Vanilla JavaScript (ES6+)
- * Description: Client-side interactive behavior for navigation, animations,
- *              skill progress bars, project filtering, form validation, and back-to-top.
- * ==========================================================================
+ * Vanilla JavaScript (ES6+)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   'use strict';
 
-  // --------------------------------------------------------------------------
-  // 1. DOM Elements Cache
-  // --------------------------------------------------------------------------
+  // DOM Elements
   const navbar = document.getElementById('mainNavbar');
   const navLinks = document.querySelectorAll('.nav-link');
   const navbarCollapse = document.getElementById('navbarResponsive');
@@ -23,32 +17,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const formSuccessAlert = document.getElementById('formSuccessAlert');
   const filterBtns = document.querySelectorAll('.filter-btn');
   const projectItems = document.querySelectorAll('.project-item');
-  const progressBars = document.querySelectorAll('.skill-progress-bar');
   const revealElements = document.querySelectorAll('.reveal-item');
+  const projectDots = document.querySelectorAll('.project-dot');
 
-  // --------------------------------------------------------------------------
-  // 2. Set Dynamic Copyright Year in Footer
-  // --------------------------------------------------------------------------
+  // 1. Dynamic Copyright Year
   if (currentYearSpan) {
     currentYearSpan.textContent = new Date().getFullYear();
   }
 
-  // --------------------------------------------------------------------------
-  // 3. Sticky Navbar & Scroll Effects
-  // --------------------------------------------------------------------------
+  // 2. Sticky Navbar on Scroll
   const handleScroll = () => {
     const scrollY = window.scrollY || window.pageYOffset;
 
-    // Toggle .scrolled class for compact styling and shadow
     if (navbar) {
-      if (scrollY > 50) {
+      if (scrollY > 40) {
         navbar.classList.add('scrolled');
       } else {
         navbar.classList.remove('scrolled');
       }
     }
 
-    // Toggle Back-To-Top button visibility
     if (backToTopBtn) {
       if (scrollY > 350) {
         backToTopBtn.classList.add('visible');
@@ -59,74 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.addEventListener('scroll', handleScroll, { passive: true });
-  // Initial check on load
   handleScroll();
 
-  // --------------------------------------------------------------------------
-  // 4. Smooth Scrolling & Active Section Highlighting
-  // --------------------------------------------------------------------------
-  // Handle mobile navbar collapse on link click
-  navLinks.forEach((link) => {
-    link.addEventListener('click', function (e) {
-      const targetId = this.getAttribute('href');
-
-      if (targetId && targetId.startsWith('#') && targetId.length > 1) {
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-          e.preventDefault();
-
-          // Calculate navbar offset
-          const navHeight = navbar ? navbar.offsetHeight : 70;
-          const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - (navHeight - 10);
-
-          window.scrollTo({
-            top: targetPosition,
-            behavior: 'smooth'
-          });
-
-          // Close mobile hamburger menu if open
-          if (navbarCollapse && navbarCollapse.classList.contains('show')) {
-            // Using Bootstrap Collapse API if available, or class removal fallback
-            if (window.bootstrap && window.bootstrap.Collapse) {
-              const bsCollapse = window.bootstrap.Collapse.getInstance(navbarCollapse) || new window.bootstrap.Collapse(navbarCollapse);
-              bsCollapse.hide();
-            } else {
-              navbarCollapse.classList.remove('show');
-            }
-          }
-        }
-      }
-    });
-  });
-
-  // Active Link on Scroll (Intersection Observer approach)
-  const sections = document.querySelectorAll('section[id]');
-  const observerOptions = {
-    root: null,
-    rootMargin: '-20% 0px -70% 0px',
-    threshold: 0
-  };
-
-  const sectionObserver = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const id = entry.target.getAttribute('id');
-        navLinks.forEach((link) => {
-          if (link.getAttribute('href') === `#${id}`) {
-            link.classList.add('active');
-          } else {
-            link.classList.remove('active');
-          }
-        });
-      }
-    });
-  }, observerOptions);
-
-  sections.forEach((section) => sectionObserver.observe(section));
-
-  // --------------------------------------------------------------------------
-  // 5. Back to Top Button
-  // --------------------------------------------------------------------------
+  // 3. Scroll to Top
   if (backToTopBtn) {
     backToTopBtn.addEventListener('click', () => {
       window.scrollTo({
@@ -136,170 +59,120 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --------------------------------------------------------------------------
-  // 6. Scroll Reveal Animations (Fade & Slide In)
-  // --------------------------------------------------------------------------
-  if ('IntersectionObserver' in window) {
-    const revealObserver = new IntersectionObserver(
-      (entries, observer) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('revealed');
-            observer.unobserve(entry.target); // Trigger animation once
+  // 4. Auto-collapse mobile navigation on click
+  if (navbarCollapse) {
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
+          const bsCollapse = bootstrap.Collapse.getInstance(navbarCollapse);
+          if (bsCollapse) {
+            bsCollapse.hide();
           }
-        });
-      },
-      {
-        threshold: 0.12,
-        rootMargin: '0px 0px -40px 0px'
-      }
-    );
-
-    revealElements.forEach((el) => revealObserver.observe(el));
-  } else {
-    // Fallback for older browsers
-    revealElements.forEach((el) => el.classList.add('revealed'));
-  }
-
-  // --------------------------------------------------------------------------
-  // 7. Animated Skill Progress Bars
-  // --------------------------------------------------------------------------
-  if ('IntersectionObserver' in window) {
-    const skillObserver = new IntersectionObserver(
-      (entries, observer) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const progressBar = entry.target;
-            const targetWidth = progressBar.getAttribute('data-progress');
-            if (targetWidth) {
-              progressBar.style.width = `${targetWidth}%`;
-            }
-            observer.unobserve(progressBar);
-          }
-        });
-      },
-      {
-        threshold: 0.2
-      }
-    );
-
-    progressBars.forEach((bar) => skillObserver.observe(bar));
-  } else {
-    // Fallback if IntersectionObserver is not supported
-    progressBars.forEach((bar) => {
-      const targetWidth = bar.getAttribute('data-progress');
-      if (targetWidth) bar.style.width = `${targetWidth}%`;
-    });
-  }
-
-  // --------------------------------------------------------------------------
-  // 8. Project Filtering (Vanilla JS)
-  // --------------------------------------------------------------------------
-  filterBtns.forEach((btn) => {
-    btn.addEventListener('click', function () {
-      // 1. Update active button state
-      filterBtns.forEach((b) => b.classList.remove('active'));
-      this.classList.add('active');
-
-      const selectedFilter = this.getAttribute('data-filter');
-
-      // 2. Filter projects with smooth fade transition
-      projectItems.forEach((item) => {
-        const itemCategory = item.getAttribute('data-category');
-
-        if (selectedFilter === 'all' || itemCategory === selectedFilter) {
-          item.classList.remove('hidden-project');
-          // Trigger slight reflow for animation
-          setTimeout(() => {
-            item.style.opacity = '1';
-            item.style.transform = 'translateY(0)';
-          }, 30);
-        } else {
-          item.style.opacity = '0';
-          item.style.transform = 'translateY(20px)';
-          setTimeout(() => {
-            item.classList.add('hidden-project');
-          }, 300);
         }
       });
     });
-  });
+  }
 
-  // --------------------------------------------------------------------------
-  // 9. Contact Form Validation & Submission (Web3Forms API)
-  // --------------------------------------------------------------------------
+  // 5. Project Category Filtering
+  if (filterBtns.length > 0 && projectItems.length > 0) {
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const filterValue = btn.getAttribute('data-filter') || 'all';
+
+        projectItems.forEach(item => {
+          const categories = (item.getAttribute('data-category') || '').split(' ');
+          if (filterValue === 'all' || categories.includes(filterValue)) {
+            item.style.display = '';
+            item.classList.add('revealed');
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    });
+  }
+
+  // 6. Project Pagination Dots
+  if (projectDots.length > 0) {
+    projectDots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        projectDots.forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+        if (projectItems[index]) {
+          projectItems[index].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+  }
+
+  // 7. Reveal Elements on Scroll
+  if ('IntersectionObserver' in window && revealElements.length > 0) {
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      root: null,
+      threshold: 0.12,
+      rootMargin: '0px 0px -40px 0px'
+    });
+
+    revealElements.forEach(el => revealObserver.observe(el));
+  } else {
+    // Fallback if observer not supported
+    revealElements.forEach(el => el.classList.add('revealed'));
+  }
+
+  // 8. Contact Form with Web3Forms AJAX
   if (contactForm) {
-    contactForm.addEventListener('submit', async function (event) {
-      event.preventDefault();
-      event.stopPropagation();
+    contactForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-      // Validate required inputs
       if (!contactForm.checkValidity()) {
+        e.stopPropagation();
         contactForm.classList.add('was-validated');
         return;
       }
 
       contactForm.classList.add('was-validated');
 
-      const submitBtn = contactForm.querySelector('button[type="submit"]');
-      const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Send Message';
+      const submitBtn = document.getElementById('contactSubmitBtn');
+      const originalBtnText = submitBtn ? submitBtn.innerHTML : 'SEND MESSAGE';
+
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-          Sending Message...
-        `;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Sending...';
       }
 
-      const formAction = contactForm.getAttribute('action') || 'https://api.web3forms.com/submit';
       const formData = new FormData(contactForm);
-      const accessKey = formData.get('access_key');
-
-      // Check if user has pasted their real Web3Forms Access Key
-      if (!accessKey || accessKey === 'YOUR_ACCESS_KEY_HERE') {
-        alert('Please paste your Web3Forms Access Key into index.html (in <input name="access_key" value="...">) to receive real emails.');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = originalBtnText;
-        }
-        return;
-      }
 
       try {
-        const response = await fetch(formAction, {
+        const response = await fetch('https://api.web3forms.com/submit', {
           method: 'POST',
-          body: formData,
-          headers: {
-            'Accept': 'application/json'
-          }
+          body: formData
         });
 
-        const result = await response.json();
+        const data = await response.json();
 
-        if (response.ok && result.success) {
-          // Success: Show confirmation banner
+        if (data.success) {
           if (formSuccessAlert) {
             formSuccessAlert.classList.remove('d-none');
             formSuccessAlert.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
-
-          // Reset form fields
           contactForm.reset();
           contactForm.classList.remove('was-validated');
-
-          // Auto-hide success alert after 7 seconds
-          setTimeout(() => {
-            if (formSuccessAlert) {
-              formSuccessAlert.classList.add('d-none');
-            }
-          }, 7000);
         } else {
-          // Show error returned by Web3Forms
-          const errorMsg = result && result.message ? result.message : 'Failed to send message. Please check your Access Key.';
-          alert(`Web3Forms Error: ${errorMsg}`);
+          alert(data.message || 'Something went wrong. Please try again.');
         }
       } catch (error) {
-        alert('Network connection error. Please check your internet and try again.');
+        console.error('Contact form error:', error);
+        alert('Network error occurred. Please reach out directly to sairainfinityfree@gmail.com');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -308,37 +181,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // --------------------------------------------------------------------------
-  // 10. Smooth CV Download Feedback
-  // --------------------------------------------------------------------------
-  const cvButtons = document.querySelectorAll('.btn-download-cv');
-  cvButtons.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      // Creates a temporary dummy blob or alert notifying user of CV download in demo
-      const notification = document.createElement('div');
-      notification.className = 'toast-notification';
-      notification.style.position = 'fixed';
-      notification.style.bottom = '90px';
-      notification.style.right = '28px';
-      notification.style.backgroundColor = '#111827';
-      notification.style.color = '#ffffff';
-      notification.style.padding = '14px 20px';
-      notification.style.borderRadius = '12px';
-      notification.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
-      notification.style.zIndex = '9999';
-      notification.style.fontSize = '0.9rem';
-      notification.style.display = 'flex';
-      notification.style.alignItems = 'center';
-      notification.style.gap = '10px';
-      notification.innerHTML = '<i class="bi bi-file-earmark-arrow-down-fill text-info"></i> Resume/CV file download initiated (Alex-Morgan-CV.pdf)';
-
-      document.body.appendChild(notification);
-      setTimeout(() => {
-        notification.style.transition = 'opacity 0.4s ease';
-        notification.style.opacity = '0';
-        setTimeout(() => notification.remove(), 400);
-      }, 3500);
-    });
-  });
 });
